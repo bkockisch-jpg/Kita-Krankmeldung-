@@ -22,8 +22,9 @@ jobs:
 
       - name: Android SDK installieren
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
@@ -31,15 +32,29 @@ jobs:
           gradle-version: '8.9'
 
       - name: Projekt entpacken
-        run: unzip -q KitaKrankmeldung_Source.zip
+        run: |
+          rm -rf KitaKrankmeldung
+          unzip -q KitaKrankmeldung_Source.zip
+
+      - name: Projektstruktur prüfen
+        run: |
+          echo "Inhalt:"
+          ls -la
+          echo ""
+          echo "Projekt:"
+          ls -la KitaKrankmeldung
 
       - name: APK bauen
         working-directory: KitaKrankmeldung
         run: gradle :app:assembleDebug --stacktrace
 
+      - name: APK prüfen
+        run: |
+          ls -lh KitaKrankmeldung/app/build/outputs/apk/debug/
+
       - name: APK speichern
         uses: actions/upload-artifact@v4
         with:
-          name: KitaKrankmeldung-v0.2.0
+          name: KitaKrankmeldung-v0.2.0-debug
           path: KitaKrankmeldung/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
